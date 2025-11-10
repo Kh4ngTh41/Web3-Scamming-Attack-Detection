@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+torch
+# NumPy >=1.22 required by Numba (used by SHAP)
+numpy
+pydantic
+python-multipart
+shap
+google-generativeai
