@@ -1,0 +1,18 @@
+{
+    "Transaction":{
+        "Accuracy":0.8575034676,
+        "Precision (Phishing)":0.8355297253,
+        "Recall (Phishing)":0.8902459868,
+        "F1-Score (Phishing)":0.8620204579,
+        "AUC":0.919912936,
+        "Avg_Pred_Time_ms":0.0003222513
+    },
+    "Account":{
+        "Accuracy":0.915356711,
+        "Precision (Phishing)":0.8118811881,
+        "Recall (Phishing)":0.9498069498,
+        "F1-Score (Phishing)":0.8754448399,
+        "AUC":0.9530595737,
+        "Avg_Pred_Time_ms":0.0005650121
+    }
+}
