@@ -53,12 +53,3 @@ This project is under active development. The current roadmap is as follows:
 * [ ] **5. CI/CD & Monitoring:**
     * Implement a CI/CD pipeline for automated testing and deployment.
     * Set up model monitoring to detect data/model drift.
-
-
----
-
-## ✍️ Author
-
-* **[Tên Của Bạn]**
-* **GitHub:** `[Link GitHub Của Bạn]`
-* **LinkedIn:** `[Link LinkedIn Của Bạn]`
