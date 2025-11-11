@@ -24,26 +24,44 @@ app = FastAPI(title="Web3 Scam Detection API",
              description="API for detecting scam accounts and transactions using MTL-MLP model with SHAP and LLM explanations",
              version="1.0.0")
 
-# Define paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "/DATA/Web 3 Scamming/Deploy/api/models/")
-FEATURES_DIR = os.path.join(BASE_DIR, "/DATA/Web 3 Scamming/Deploy/api/features")
+# Define paths (use deploy api folder as base)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, 'models')
+FEATURES_DIR = os.path.join(BASE_DIR, 'features')
 
 # Load model
-MODEL_PATH = os.path.join(MODEL_DIR, "MTL_MLP_best.pth")
+MODEL_PATH = os.path.join(MODEL_DIR, 'MTL_MLP_best.pth')
 
 # Initialize model with correct architecture
 model = MTL_MLP(
-    input_dim=15,  # concatenated 15 account + 15 transaction features
-    shared_dim=128,  # As defined in the training
-    head_hidden_dim=64  # As defined in the training
+    input_dim=15,
+    shared_dim=128,
+    head_hidden_dim=64
 )
 
-# Load model weights
+# Load model weights robustly
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
-model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+ckpt = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
+# support checkpoints that wrap state dict
+if isinstance(ckpt, dict):
+    if 'state_dict' in ckpt:
+        state = ckpt['state_dict']
+    elif 'model_state_dict' in ckpt:
+        state = ckpt['model_state_dict']
+    else:
+        state = ckpt
+else:
+    state = ckpt
+
+# strip module prefix if present
+new_state = {}
+for k, v in state.items():
+    new_k = k.replace('module.', '') if k.startswith('module.') else k
+    new_state[new_k] = v
+
+model.load_state_dict(new_state)
 model.eval()
 
 # Load feature lists
@@ -58,6 +76,22 @@ with open(account_features_path, "r") as f:
 
 with open(transaction_features_path, "r") as f:
     TRANSACTION_FEATURES = json.load(f)
+
+
+def _feature_name_list(feature_json):
+    # Accept either list of strings or list of dicts with 'feature' key
+    if not feature_json:
+        return []
+    if isinstance(feature_json[0], str):
+        return feature_json
+    elif isinstance(feature_json[0], dict) and 'feature' in feature_json[0]:
+        return [f['feature'] for f in feature_json]
+    else:
+        # fallback: convert items to str
+        return [str(f) for f in feature_json]
+
+ACCOUNT_FEATURE_NAMES = _feature_name_list(ACCOUNT_FEATURES)
+TRANSACTION_FEATURE_NAMES = _feature_name_list(TRANSACTION_FEATURES)
 
 class AccountRequest(BaseModel):
     account_address: str
@@ -105,20 +139,21 @@ async def predict_scam(request: AccountRequest):
 
             # Initialize SHAP explainer if not already done
             if not hasattr(app.state, 'shap_explainer'):
-                app.state.shap_explainer = SHAPExplainer(model)
+                # initialize explainer with CPU device
+                app.state.shap_explainer = SHAPExplainer(model, device='cpu')
 
             # Get SHAP values for account prediction
             account_explanation = app.state.shap_explainer.explain_prediction(
                 features[:, :15].numpy(),  # First 15 features for account
                 'account',
-                [f['feature'] for f in ACCOUNT_FEATURES]
+                ACCOUNT_FEATURE_NAMES
             )
 
             # Get SHAP values for transaction prediction
             transaction_explanation = app.state.shap_explainer.explain_prediction(
                 features[:, 15:].numpy(),  # Last 15 features for transaction
                 'transaction',
-                [f['feature'] for f in TRANSACTION_FEATURES]
+                TRANSACTION_FEATURE_NAMES
             )
 
             shap_explanations = {

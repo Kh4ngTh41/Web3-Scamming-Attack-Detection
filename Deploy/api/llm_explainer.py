@@ -5,7 +5,7 @@ import os
 class LLMExplainer:
     def __init__(self, api_key: str):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.0-flash-lite')
         
     def _create_explanation_prompt(self, prediction_results: Dict, shap_values: Dict) -> str:
         """Tạo prompt chi tiết cho Gemini"""

@@ -35,8 +35,8 @@ def test_llm_predictions():
                     "nft_num_owners": 500,
                     "nft_market_cap": 5000000000000000000000
                 }],
-                "explain": False,
-                "explain_with_llm": False
+                "explain": True,
+                "explain_with_llm": True
             }
         },
         {
@@ -59,8 +59,8 @@ def test_llm_predictions():
                     "nft_num_owners": 10,  # Low number of owners
                     "nft_market_cap": 500000000000000000000
                 }],
-                "explain": False,
-                "explain_with_llm": False
+                "explain": True,
+                "explain_with_llm": True
             }
         }
     ]
